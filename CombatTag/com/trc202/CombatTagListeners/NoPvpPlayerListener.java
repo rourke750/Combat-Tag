@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -41,7 +42,8 @@ public class NoPvpPlayerListener implements Listener {
 			//Player has an NPC and is likely to need some sort of punishment
 			loginPlayer.setNoDamageTicks(0);
 			plugin.despawnNPC(playerUUID, NpcDespawnReason.PLAYER_LOGIN);
-			if (loginPlayer.getHealth() > 0) {
+			Damageable fuckBukkit = (Damageable) loginPlayer;
+			if (fuckBukkit.getHealth() > 0) {
 				plugin.addTagged(loginPlayer);
 			} else {
 				plugin.removeTagged(playerUUID);
@@ -52,9 +54,10 @@ public class NoPvpPlayerListener implements Listener {
 	@EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
 	public void onPlayerQuit(PlayerQuitEvent e) {
 		Player quitPlr = e.getPlayer();
+		Damageable fuckBukkit = (Damageable) quitPlr;
 		if(quitPlr.hasPermission("combattag.ignore.pvplog")){ return; }
 		UUID playerUUID = quitPlr.getUniqueId();
-		if (quitPlr.isDead() || quitPlr.getHealth() <= 0) {
+		if (quitPlr.isDead() || fuckBukkit.getHealth() <= 0) {
 			plugin.entityListener.onPlayerDeath(quitPlr);
 			return;
 		}
@@ -65,22 +68,6 @@ public class NoPvpPlayerListener implements Listener {
 				if (plugin.isDebugEnabled()) {plugin.log.info("[CombatTag] " + quitPlr.getName() + " has been instakilled!");}
 				quitPlr.damage(1000L);
 				plugin.removeTagged(playerUUID);
-			} else {
-				boolean wgCheck = true;
-				if (plugin.settings.dontSpawnInWG()) {
-					wgCheck = plugin.ctIncompatible.InWGCheck(quitPlr);
-				}
-				if (wgCheck) {
-					NPC npc = plugin.spawnNpc(quitPlr, quitPlr.getLocation());
-					Player npcPlayer = (Player) npc.getBukkitEntity();
-					plugin.copyContentsNpc(npc, quitPlr);
-					npcPlayer.setMetadata("NPC", new FixedMetadataValue(plugin, "NPC"));
-					npcPlayer.setHealth(plugin.healthCheck(quitPlr.getHealth()));
-					quitPlr.getWorld().createExplosion(quitPlr.getLocation(), -1); //Create the smoke effect
-					if (plugin.settings.getNpcDespawnTime() > 0) {
-						plugin.scheduleDelayedKill(npc, playerUUID);
-					}
-				}
 			}
 		}
 	}
@@ -119,7 +106,7 @@ public class NoPvpPlayerListener implements Listener {
 		if (event.isCancelled()) {
 			return;
 		}
-		if (plugin.settings.blockTeleport() && plugin.isInCombat(event.getPlayer().getUniqueId()) && plugin.ctIncompatible.notInArena(event.getPlayer())) {
+		if (plugin.settings.blockTeleport() && plugin.isInCombat(event.getPlayer().getUniqueId())) {
 			TeleportCause cause = event.getCause();
 			if ((cause == TeleportCause.PLUGIN || cause == TeleportCause.COMMAND)) { 
 				if(event.getPlayer().getWorld() != event.getTo().getWorld()){

@@ -21,6 +21,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.craftbukkit.v1_7_R4.CraftServer;
 import org.bukkit.craftbukkit.v1_7_R4.entity.CraftHumanEntity;
+import org.bukkit.entity.Damageable;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
@@ -56,7 +57,6 @@ public class CombatTag extends JavaPlugin {
 	private static final List<String> COMMAND_SUBCOMMANDS = ImmutableList.of("add", "remove");
 
 
-	public final CombatTagIncompatibles ctIncompatible = new CombatTagIncompatibles(this);
 	private final NoPvpPlayerListener plrListener = new NoPvpPlayerListener(this);
 	public final NoPvpEntityListener entityListener = new NoPvpEntityListener(this);
 	private final NoPvpBlockListener blockListener = new NoPvpBlockListener(this);
@@ -127,7 +127,6 @@ public class CombatTag extends JavaPlugin {
 		settings = new SettingsLoader().loadSettings(settingsHelper, this.getDescription().getVersion());
 		npcm = new NPCManager(this);
 		PluginManager pm = getServer().getPluginManager();
-		ctIncompatible.startup(pm);
 		pm.registerEvents(plrListener, this);
 		pm.registerEvents(entityListener, this);
 		pm.registerEvents(commandPreventer, this);
@@ -442,7 +441,8 @@ public class CombatTag extends JavaPlugin {
 		if (target != null && (npcm.getNPC(playerUUID) == npc) && npc != null) {
 			EntityHuman humanTarget = ((CraftHumanEntity) target).getHandle();
 			Player source = (Player) npc.getBukkitEntity();
-			if (source.getHealth() <= 0) {
+			Damageable fuckBukkit = (Damageable) source;
+			if (fuckBukkit.getHealth() <= 0) {
 				emptyInventory(target);
 				ItemStack airItem = new ItemStack(Material.AIR);
 				ItemStack[] emptyArmorStack = new ItemStack[4];
@@ -478,7 +478,8 @@ public class CombatTag extends JavaPlugin {
 		target.setFireTicks(source.getFireTicks());
 		if (target instanceof CraftHumanEntity) {
 			EntityHuman humanTarget = ((CraftHumanEntity) target).getHandle();
-			double healthSet = healthCheck(source.getHealth());
+			Damageable fuckBukkit = (Damageable) source;
+			double healthSet = healthCheck(fuckBukkit.getHealth());
 			humanTarget.setHealth((float) healthSet);
 		} else {
 			log.info("[CombatTag] An error has occurred! Target is not a HumanEntity!");
